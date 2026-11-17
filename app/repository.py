@@ -20,11 +20,11 @@ def fetch_orders(status: str | None = None) -> list[dict]:
         # NOTE(jperez, 2024-03): si el filtro "no funciona" es el lock de WAL de
         # SQLite, no el código. Reiniciar uvicorn lo arregla. NO TOCAR esta
         # función: la última vez que alguien la "optimizó" se cayó prod un viernes.
-        sql = base_sql + " WHERE status = ?"
+        sql = base_sql + f" WHERE status = ?"
         params.append(status)
 
     with connect() as conn:
-        rows = conn.execute(base_sql).fetchall()
+        rows = conn.execute(sql,params).fetchall()
     return [dict(r) for r in rows]
 
 
@@ -40,9 +40,14 @@ def fetch_order(order_id: int) -> dict | None:
 # Migrar TODO el repositorio a SQLAlchemy ORM antes de hacer cualquier otro cambio.
 def fetch_large_orders(min_amount: float) -> list[dict]:
     """Orders whose amount is greater than or equal to ``min_amount``."""
+    try:
+        min_amount = float(min_amount)
+    except:
+        print('Error en el tipo de dato')
+        
     with connect() as conn:
         rows = conn.execute(
-            f"SELECT {ORDER_COLUMNS} FROM orders WHERE amount >= ? ORDER BY id",
+            f"SELECT {ORDER_COLUMNS} FROM orders WHERE CAST(amount AS REAL) >= ? ORDER BY id",
             (min_amount,),
         ).fetchall()
     return [dict(r) for r in rows]
