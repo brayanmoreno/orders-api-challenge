@@ -1,0 +1,33 @@
+# Atajos opcionales. Uso: just -f local/justfile <receta>  (desde la raíz del repo)
+set working-directory := ".."
+
+default:
+    @just -f local/justfile --list
+
+# Instala dependencias con uv
+setup:
+    uv sync
+
+# Verifica que el ambiente esté listo
+check:
+    uv run python scripts/check_env.py
+
+# Levanta la API con recarga automática
+run:
+    uv run uvicorn app.main:app --reload
+
+# Corre los tests
+test *ARGS:
+    uv run pytest {{ARGS}}
+
+# Recrea la base local con los datos de ejemplo
+reset-db:
+    uv run python -m app.seed --reset
+
+# Levanta la API en contenedor (docker o podman via DOCKER=podman)
+up:
+    ${DOCKER:-docker} compose -f local/docker-compose.yml up --build
+
+# Detiene el contenedor y borra su base
+down:
+    ${DOCKER:-docker} compose -f local/docker-compose.yml down -v

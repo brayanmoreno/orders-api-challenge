@@ -1,0 +1,24 @@
+# Compatible con Docker Desktop, Colima, Podman (podman compose) y Rancher Desktop.
+# Uso desde la raíz del repo: docker compose -f local/docker-compose.yml up --build
+name: orders-api
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: local/Dockerfile
+    env_file:
+      - path: ./conf/app.env
+        required: false
+    environment:
+      DB_PATH: /data/orders.db
+    ports:
+      - "${PORT:-8000}:${PORT:-8000}"
+    volumes:
+      - ../app:/app/app
+      - ../tests:/app/tests
+      - ../scripts:/app/scripts
+      - orders_data:/data
+
+volumes:
+  orders_data: {}
